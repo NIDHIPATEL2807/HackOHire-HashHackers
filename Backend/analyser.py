@@ -101,7 +101,7 @@ Do not include explanations, comments, or markdown. Return pure JSON.
                 "stream": False,
                 "format": "json",
                 "options": {
-                    "temperature": 0.5,  # Slightly increased for more creative suggestions
+                    "temperature": 0.6,  # Slightly increased for more creative suggestions
                     "num_predict": 600   # Increased to handle longer responses
                 }
             },
@@ -115,14 +115,6 @@ Do not include explanations, comments, or markdown. Return pure JSON.
         if parsed:
             if not isinstance(parsed.get("suggested_password"), str):
                 raise ValueError("Suggested password is not a string")
-            # Additional validation for suggested password
-            suggested = parsed.get("suggested_password")
-            if (len(suggested) < 16 or
-                sum(c.isupper() for c in suggested) < 2 or
-                sum(c.islower() for c in suggested) < 2 or
-                sum(c.isdigit() for c in suggested) < 2 or
-                sum(c in "!@#$%^&*?~" for c in suggested) < 2):
-                raise ValueError("Suggested password does not meet complexity requirements")
             return parsed
         else:
             raise ValueError("No valid JSON block extracted from AI response")

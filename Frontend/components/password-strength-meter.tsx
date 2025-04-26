@@ -11,17 +11,17 @@ export function PasswordStrengthMeter({ strength, className }: PasswordStrengthM
   // Determine color based on strength
   const getColor = () => {
     if (strength < 30) return "bg-red-500"
-    if (strength < 60) return "bg-amber-500"
-    if (strength < 80) return "bg-teal-500"
+    if (strength < 70) return "bg-amber-500"
+    if (strength < 90) return "bg-teal-500"
     return "bg-emerald-500"
   }
 
   // Determine label based on strength
   const getLabel = () => {
-    if (strength < 30) return "Weak"
-    if (strength < 60) return "Fair"
-    if (strength < 80) return "Good"
-    return "Strong"
+    if (strength < 30) return "Very Weak"
+    if (strength < 70) return "Moderate"
+    if (strength < 90) return "Strong"
+    else return "Very Strong"
   }
 
   return (

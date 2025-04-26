@@ -103,7 +103,7 @@ Do not include days, minutes, explanations, comments, or markdown. Return pure J
         "stream": False,
         "format": "json",
         "options": {
-            "temperature": 0.3,  # Lowered for more consistent output
+            "temperature": 0.1,  # Lowered for more consistent output
             "num_predict": 500
         }
     }
