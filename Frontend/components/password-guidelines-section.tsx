@@ -106,20 +106,7 @@ export function PasswordGuidelinesSection() {
             let colSpan = "md:col-span-4" // Default size
 
             // First row: 2 cards spanning 6 columns each
-            if (index === 0 || index === 1) {
-              colSpan = "md:col-span-6"
-            }
-            // Middle card: spans 6 columns and 2 rows (taller)
-            else if (index === 2) {
-              colSpan = "md:col-span-6 md:row-span-2"
-            }
-            // Last two cards: span 6 columns each
-            else {
-              colSpan = "md:col-span-6"
-            }
-
-            // Highlight the Two-Factor Authentication card (usually the 3rd card)
-            const highlighted = index === 2
+            
 
             return (
               <motion.div
@@ -133,9 +120,8 @@ export function PasswordGuidelinesSection() {
                 <div className="absolute inset-0 rounded-xl">
                   <div
                     className={`absolute inset-0 blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-700 ${
-                      highlighted
-                        ? "bg-gradient-to-r from-teal-500/30 via-cyan-500/30 to-teal-500/30"
-                        : "bg-gradient-to-r from-teal-400/30 via-primary/30 to-cyan-400/30"
+                      
+                        "bg-gradient-to-r from-teal-400/30 via-primary/30 to-cyan-400/30"
                     }`}
                   />
                 </div>
@@ -143,9 +129,7 @@ export function PasswordGuidelinesSection() {
                 {/* Border glow */}
                 <div
                   className={`absolute inset-0 rounded-xl opacity-40 group-hover:opacity-100 transition-opacity duration-700 ${
-                    highlighted
-                      ? "bg-gradient-to-r from-teal-500 via-cyan-500 to-teal-500"
-                      : "bg-gradient-to-r from-teal-400 via-primary to-cyan-400"
+                     "bg-gradient-to-r from-teal-400 via-primary to-cyan-400"
                   }`}
                 >
                   <div className="absolute inset-px rounded-xl bg-[#0a1122]" />
@@ -153,7 +137,7 @@ export function PasswordGuidelinesSection() {
 
                 {/* Content */}
                 <div className="relative h-full bg-[#0a1122] backdrop-blur-sm rounded-xl border border-slate-800/50 p-6 flex flex-col">
-                  <h3 className={`text-lg font-semibold mb-3 ${highlighted ? "text-teal-400" : "text-white"}`}>
+                  <h3 className={`text-lg font-semibold mb-3 ${"text-white"}`}>
                     {insight.header}
                   </h3>
                   <p className="text-muted-foreground text-sm">{insight.quote}</p>
