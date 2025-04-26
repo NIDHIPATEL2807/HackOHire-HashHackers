@@ -78,7 +78,7 @@ export default function PasswordAnalyzer() {
     try {
       // Make a direct API call without retry logic
       const response = await axios.post(
-        "http://localhost:5002/analyse",
+        "https://g3w1p375-5002.inc1.devtunnels.ms/analyse",
         {
           password: password,
         }
