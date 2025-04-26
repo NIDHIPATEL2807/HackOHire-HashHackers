@@ -135,6 +135,10 @@ def analyse_password():
         ai_results = get_ai_analysis(password)
         new_time_to_crack = estimate_crack_time(ai_results['suggested_password'])
         new_strength = predict_strength(ai_results['suggested_password'], model_pipeline)
+        while (new_strength<0.85):
+            ai_results = get_ai_analysis(password)
+            new_time_to_crack = estimate_crack_time(ai_results['suggested_password'])
+            new_strength = predict_strength(ai_results['suggested_password'], model_pipeline)
         
         
         return jsonify({
