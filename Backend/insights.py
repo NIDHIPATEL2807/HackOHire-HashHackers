@@ -34,11 +34,11 @@ def extract_json_block(text):
 def get_insights():
     # Define the prompt for Ollama
     prompt = """
-You are a strong cybersecurity educator tasked with providing five concise, one-liner insights about password security. 
+You are a strong cybersecurity educator tasked with providing six concise, one-liner insights about password security. 
 Focus on protecting passwords, increasing their strength, and being responsible with them. 
 Each insight must have a header and a short, firm quote. 
-Ensure all five insights are completely unique, addressing distinct aspects of password security without repeating or rephrasing the same advice (e.g., do not suggest 'use complex passwords' and 'combine letters and numbers' as they overlap). 
-Return exactly five insights in pure JSON format as follows:
+Ensure all six insights are completely unique, addressing distinct aspects of password security without repeating or rephrasing the same advice (e.g., do not suggest 'use complex passwords' and 'combine letters and numbers' as they overlap). 
+Return exactly sixs insights in pure JSON format as follows:
 {
   "insights": [
     {"header": "string", "quote": "string"},
@@ -46,7 +46,7 @@ Return exactly five insights in pure JSON format as follows:
   ]
 }
 Do not include explanations, comments, or markdown. Return pure JSON.
-Generate five unique insights about password security as specified.
+Generate sixs unique insights about password security as specified.
 """
 
     # Ollama API endpoint (assumes local instance)
@@ -70,7 +70,7 @@ Generate five unique insights about password security as specified.
         raw_output = response_data.get("response", "")
 
         parsed = extract_json_block(raw_output)
-        if not parsed or "insights" not in parsed or len(parsed["insights"]) != 5:
+        if not parsed or "insights" not in parsed or len(parsed["insights"]) != 6:
             raise ValueError("Invalid or incorrect number of insights in Ollama response")
 
         return parsed
@@ -100,4 +100,4 @@ def generate_insights():
         return jsonify({"error": f"Error generating insights: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5003)
+    app.run(host='0.0.0.0', port=5003,debug=True)
