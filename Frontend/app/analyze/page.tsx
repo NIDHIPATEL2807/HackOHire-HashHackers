@@ -564,13 +564,7 @@ export default function PasswordAnalyzer() {
                         )
                       })()}
                     </div>
-                    <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                      <span>Minutes</span>
-                      <span>Hours</span>
-                      <span>Days</span>
-                      <span>Years</span>
-                      <span>Centuries</span>
-                    </div>
+                    
                   </div>
 
                   {/* Actual time comparison */}

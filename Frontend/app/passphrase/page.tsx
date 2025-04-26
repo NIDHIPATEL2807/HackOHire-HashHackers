@@ -332,19 +332,7 @@ export default function PassphraseGenerator() {
                     <PasswordStrengthMeter strength={result.strength * 100} />
                   </motion.div>
 
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 1.0 }}
-                  >
-                    <Alert>
-                      <Info className="h-4 w-4" />
-                      <AlertTitle>Estimation Note</AlertTitle>
-                      <AlertDescription>
-                      These crack times are estimations based on current computing power and common cracking methods, assuming the use of an RTX 4090 GPU. Actual times may vary depending on hardware specifications, cracking techniques used, and future technological advancements. These results should be considered general guidelines rather than absolute security guarantees.
-                      </AlertDescription>
-                    </Alert>
-                  </motion.div>
+                  
                 </AnimatedCardContent>
               </Card>
             </AnimatedCard>

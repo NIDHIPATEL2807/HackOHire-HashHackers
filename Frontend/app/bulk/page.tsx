@@ -232,7 +232,7 @@ export default function BulkAnalyzer() {
       })
 
       // Download the file
-      const response = await axios.get(result.download_link, {
+      const response = await axios.get(`http://127.0.0.1:5000${result.download_link}`, {
         responseType: "blob",
       })
 
