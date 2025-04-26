@@ -68,10 +68,10 @@ def get_ai_analysis(password):
     prompt = f"""
 I am a responsible and expert password generator tasked with analyzing the password: "{password}". My goal is to identify vulnerabilities, provide improvement suggestions, and suggest a significantly stronger password that retains the core theme or meaning of the original password but maximizes security for real-world use. Follow these steps:
 
-1. Analyze the password for specific vulnerabilities or weaknesses (e.g., dictionary words, predictable patterns, lack of character variety, short length, common substitutions). Do not list generic issues unless they genuinely apply.
+1. Analyze the password for specific vulnerabilities or weaknesses according to the password give realtime issues or suggestions in the passoword. Do not list generic issues unless they genuinely apply.
 2. Provide actionable suggestions to improve the password based on the identified vulnerabilities.
 3. Suggest a stronger version of the password that:
-   - Retains the core theme or meaning of the original password.
+   - Retains the core theme or meaning of the original password and the new generated password should be more stronger than older one.
    - Must be at least 16 characters long to ensure maximum entropy.
    - Must include at least two uppercase letters, two lowercase letters, two numbers, and two special characters (e.g., !@#$%^&*?~).
    - Must avoid predictable patterns (e.g., keyboard sequences like "qwerty", consecutive characters like "aaa", or common substitutions like "password -> p@ssw0rd").

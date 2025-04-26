@@ -83,7 +83,7 @@ def estimate_crack_times_fallback(password):
 def get_crack_times(password):
     # Updated prompt for black hat hacker with precise hour-based calculations
     prompt = f"""
-I am a skilled black hat hacker tasked with analyzing the password: '{password}'. Using my expertise, I will calculate the precise time to crack this password based on its complexity (length, character set, patterns) and advanced attack methods. I will use the following benchmarks: rainbow table attack (assuming precomputed tables optimized for common and custom patterns), offline brute force attack (100 billion hashes/second with a top-tier GPU cluster), and dictionary attack (10 million-word dictionary with extensive variations). I will provide exact crack times in hours only, with rigorous checks and realistic calculations based on password strength. Return the results in pure JSON format as follows:
+I am a skilled black hat hacker tasked with analyzing the password: '{password}'. Using my expertise, I will calculate the precise time to crack this password based on its complexity (length, character set, patternsa and other crucial factors which a hacker considers) and advanced attack methods. I will use the following benchmarks: rainbow table attack (assuming precomputed tables optimized for common and custom patterns), offline brute force attack (100 billion hashes/second with a top-tier GPU cluster), and dictionary attack (10 million-word dictionary with extensive variations). I will provide exact crack times in hours only, with rigorous checks and realistic calculations based on password strength and password.As you are a strong black hat hacker it should be easy for you to hack weak and moderate passwords while may take a bit time in stronger ones and older password can never be high in crack time compared to newer one as it is weaker many times and be fast and as quick as possible while cracking the password. Return the results in pure JSON format as follows:
 {{
   "password": "{password}",
   "crack_times": {{
@@ -92,7 +92,7 @@ I am a skilled black hat hacker tasked with analyzing the password: '{password}'
     "dictionary_attack": {{"hours": number}}
   }}
 }}
-Do not include days, minutes, explanations, comments, or markdown. Return pure JSON with precise numerical values based on advanced hacker techniques.
+Do not include days, minutes, explanations, comments, or markdown. Return pure JSON with precise numerical values based on advanced hacker techniques and be smart and responsible while hacking and do it with accuracy.
 """
 
     # Ollama API endpoint (assumes local instance)
