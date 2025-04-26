@@ -83,7 +83,7 @@ export default function PassphraseGenerator() {
       const response = await apiRequestWithRetry(
         () =>
           axios.post<PasswordResponse>(
-            "https://g3w1p375-5001.inc1.devtunnels.ms/generate-passphrase",
+            "http://127.0.0.1:5001/generate-passphrase",
             {
               phrases: validPhrases,
             },

@@ -154,7 +154,7 @@ export default function BulkAnalyzer() {
     const attemptUpload = async () => {
       try {
         // Make API call with axios
-        const response = await axios.post("https://g3w1p375-5000.inc1.devtunnels.ms/bulk", formData, {
+        const response = await axios.post("http://127.0.0.1:5000/bulk", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           }
@@ -237,7 +237,7 @@ export default function BulkAnalyzer() {
       })
 
       // Download the file
-      const response = await axios.get(`https://g3w1p375-5002.inc1.devtunnels.ms${result.downloadUrl}`, {
+      const response = await axios.get(`http://127.0.0.1:5000${result.downloadUrl}`, {
         responseType: "blob",
       })
 

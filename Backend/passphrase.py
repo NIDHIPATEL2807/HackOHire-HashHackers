@@ -46,16 +46,16 @@ Your response must ONLY include the final passphrase — no explanation or extra
 Based on the following personal phrases:
 {', '.join(phrases)}
 
-Generate a secure, sentence-like passphrase that:
-1. Blends most of the input phrases into a logical, vivid sentence structure.
-2. Is 15 to 20 characters long.
-3. Includes at least 2 uppercase letters, 1-2 numbers, and 1-2 special characters (only if they fit naturally).
-4. Avoids gibberish or random characters or excessive symbol use.
-5. Does not use simple substitutions like 'a' → '@'.
-6. Should be easy to remember for someone familiar with the phrases, but still hard to guess for others.
-7. Don’t include spaces in the passphrase.
-
-Only return the passphrase. Do not include any explanation.
+Generate a **secure, sentence-like passphrase** that:
+    1. Blends most of the input phrases into a logical, vivid sentence structure.
+    2. Is **15 to 20 characters** long.
+    3. Try to make a sense of the phrases, but it should not be a direct copy of any of them.
+    4. Includes at least **2 uppercase letters**, **1-2 numbers**, and **1-2 special characters** (only if they fit naturally).
+    5. **Avoids gibberish, random characters**, or excessive symbol use.
+    6. Do use simple substitutions like 'a' → '@'.
+    7. Should be **easy to remember for someone familiar with the phrases**, but still hard to guess for others.
+    8. Don't include spaces in the passphrase.
+    Output only the final passphrase.
 """
 
     try:

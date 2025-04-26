@@ -2,79 +2,51 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { GlowingCard } from "./glowing-card"
+import axios from "axios"
 
-// Define the type for guidelines coming from the backend
-interface Guideline {
-  id: string
-  title: string
-  description: string
+// Define the type for insights coming from the backend
+interface Insight {
+  header: string
+  quote: string
+}
+
+interface InsightsResponse {
+  insights: Insight[]
 }
 
 export function PasswordGuidelinesSection() {
-  const [guidelines, setGuidelines] = useState<Guideline[]>([])
+  const [insights, setInsights] = useState<Insight[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch guidelines from the backend
+  // Fetch insights from the backend
   useEffect(() => {
-    const fetchGuidelines = async () => {
+    const fetchInsights = async () => {
       setIsLoading(true)
       try {
-        // In a real implementation, this would be an API call
-        // For now, we'll use mock data to simulate a backend response
-        const mockResponse = [
-          {
-            id: "1",
-            title: "Use Long Passwords",
-            description:
-              "Aim for at least 12 characters. Length is one of the most important factors in password strength.",
-          },
-          {
-            id: "2",
-            title: "Mix Character Types",
-            description:
-              "Combine uppercase, lowercase, numbers, and special characters to increase complexity and make your passwords significantly harder to crack through brute force methods.",
-          },
-          {
-            id: "3",
-            title: "Avoid Personal Info",
-            description:
-              "Don't use easily guessable information like birthdays, names, or common words that could be discovered through social engineering.",
-          },
-          {
-            id: "4",
-            title: "Use Unique Passwords",
-            description:
-              "Never reuse passwords across different accounts to prevent cascading breaches. When one service is compromised, others remain secure.",
-          },
-          {
-            id: "5",
-            title: "Consider Passphrases",
-            description:
-              "A string of random words can be both secure and memorable, like 'correct-horse-battery-staple'.",
-          },
-          {
-            id: "6",
-            title: "Check for Breaches",
-            description:
-              "Regularly verify if your passwords have been exposed in known data breaches and change them immediately if compromised.",
-          },
-        ]
-
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 500))
-        setGuidelines(mockResponse)
+        // Make the API call to fetch insights
+        const response = await axios.get<InsightsResponse>("http://127.0.0.1:5003/generate_insights")
+        setInsights(response.data.insights)
       } catch (err) {
-        console.error("Error fetching guidelines:", err)
-        setError("Failed to load password guidelines. Please try again later.")
+        console.error("Error fetching insights:", err)
+        setError("Failed to load security insights. Please try again later.")
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchGuidelines()
-  }, [])
+    fetchInsights()
+  }, []) // Empty dependency array ensures this runs once when component mounts
+
+  // Don't render anything while loading
+  if (isLoading) {
+    return null
+  }
+
+  // Don't render anything if there's an error or no insights
+  if (error || insights.length === 0) {
+    return null
+  }
 
   // Define card sizes for the asymmetric layout
   const getCardSize = (index: number) => {
@@ -84,8 +56,9 @@ export function PasswordGuidelinesSection() {
   }
 
   // Determine if a card should be highlighted
-  const isHighlighted = (index: number) => index === 1
+  const isHighlighted = (index: number) => index === 2 // Highlighting the 3rd card (2FA)
 
+  // Only render the section once we have insights data
   return (
     <section className="py-24 relative overflow-hidden">
       {/* Background elements */}
@@ -127,30 +100,68 @@ export function PasswordGuidelinesSection() {
           </motion.p>
         </motion.div>
 
-        {isLoading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="relative h-12 w-12">
-              <div className="absolute inset-0 rounded-full border-t-2 border-primary animate-spin"></div>
-            </div>
-          </div>
-        ) : error ? (
-          <div className="text-center py-10">
-            <p className="text-red-400">{error}</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-fr">
-            {guidelines.map((guideline, index) => (
-              <GlowingCard
-                key={guideline.id}
-                title={guideline.title}
-                description={guideline.description}
-                delay={0.4 + index * 0.1}
-                size={getCardSize(index)}
-                highlight={isHighlighted(index)}
-              />
-            ))}
-          </div>
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          {insights.map((insight, index) => {
+            // Define custom layout based on index
+            let colSpan = "md:col-span-4" // Default size
+
+            // First row: 2 cards spanning 6 columns each
+            if (index === 0 || index === 1) {
+              colSpan = "md:col-span-6"
+            }
+            // Middle card: spans 6 columns and 2 rows (taller)
+            else if (index === 2) {
+              colSpan = "md:col-span-6 md:row-span-2"
+            }
+            // Last two cards: span 6 columns each
+            else {
+              colSpan = "md:col-span-6"
+            }
+
+            // Highlight the Two-Factor Authentication card (usually the 3rd card)
+            const highlighted = index === 2
+
+            return (
+              <motion.div
+                key={index}
+                className={`${colSpan} relative rounded-xl overflow-hidden`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
+              >
+                {/* Glow effect */}
+                <div className="absolute inset-0 rounded-xl">
+                  <div
+                    className={`absolute inset-0 blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-700 ${
+                      highlighted
+                        ? "bg-gradient-to-r from-teal-500/30 via-cyan-500/30 to-teal-500/30"
+                        : "bg-gradient-to-r from-teal-400/30 via-primary/30 to-cyan-400/30"
+                    }`}
+                  />
+                </div>
+
+                {/* Border glow */}
+                <div
+                  className={`absolute inset-0 rounded-xl opacity-40 group-hover:opacity-100 transition-opacity duration-700 ${
+                    highlighted
+                      ? "bg-gradient-to-r from-teal-500 via-cyan-500 to-teal-500"
+                      : "bg-gradient-to-r from-teal-400 via-primary to-cyan-400"
+                  }`}
+                >
+                  <div className="absolute inset-px rounded-xl bg-[#0a1122]" />
+                </div>
+
+                {/* Content */}
+                <div className="relative h-full bg-[#0a1122] backdrop-blur-sm rounded-xl border border-slate-800/50 p-6 flex flex-col">
+                  <h3 className={`text-lg font-semibold mb-3 ${highlighted ? "text-teal-400" : "text-white"}`}>
+                    {insight.header}
+                  </h3>
+                  <p className="text-muted-foreground text-sm">{insight.quote}</p>
+                </div>
+              </motion.div>
+            )
+          })}
+        </div>
       </div>
     </section>
   )

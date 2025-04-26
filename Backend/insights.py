@@ -90,7 +90,7 @@ Generate five unique insights about password security as specified.
             ]
         }
 
-@app.route('/generate_insights', methods=['POST'])
+@app.route('/generate_insights', methods=['GET'])
 def generate_insights():
     try:
         insights_data = get_insights()
