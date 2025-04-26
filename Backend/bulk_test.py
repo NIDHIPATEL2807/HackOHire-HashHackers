@@ -68,14 +68,14 @@ def process_csv():
 
         # Add 'class' column based on strength
         def classify_strength(score):
-            if score >= 0.85:
-                return "very strong"
-            elif score >= 0.65:
-                return "strong"
-            elif score >= 0.3:
-                return "moderate"
+            if score < 0.45:
+                return 'Weak'
+            elif score < 0.7:
+                return 'Moderate'
+            elif score < 0.9:
+                return 'Strong'
             else:
-                return "weak"
+                return 'Very Strong'
 
         df['class'] = df['strength'].apply(classify_strength)
         print("Class column added based on strength")
@@ -104,4 +104,4 @@ def download_file(filename):
         return jsonify({"error": f"File not found: {str(e)}"}), 404
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5005)
+    app.run(host='0.0.0.0', port=5005, debug=True)

@@ -314,7 +314,7 @@ def predict_strength(password: str, model_pipeline) -> float:
     
     # If prediction > 0.7 and complexity issues exist
     if predicted_strength > 0.7 and complexity_issues:
-        predicted_strength = round(random.uniform(0.3, 0.5), 2)
+        predicted_strength = round(random.uniform(0.3, 0.6), 2)
     
     return predicted_strength
 
