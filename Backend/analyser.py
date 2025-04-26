@@ -141,16 +141,6 @@ def analyse_password():
         new_time_to_crack = estimate_crack_time(new_password)
         new_strength = predict_strength(new_password, model_pipeline)
 
-        # Retry mechanism if strength is low
-        retries = 0
-        while new_strength < 0.85 and retries < 3:
-            ai_results = get_ai_analysis(password)
-            new_password = ai_results.get("suggested_password")
-            if not new_password:
-                break
-            new_time_to_crack = estimate_crack_time(new_password)
-            new_strength = predict_strength(new_password, model_pipeline)
-            retries += 1
 
         return jsonify({
             "original_password": password,
