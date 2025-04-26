@@ -27,8 +27,7 @@ import axios from "axios"
 
 // Define types for the API response
 interface CrackTimeInfo {
-  days: number
-  minutes: number
+  hours: number
 }
 
 interface AttackTypes {
@@ -124,7 +123,7 @@ export default function PasswordAnalyzer() {
     if (!timeToCrackInfo) return "Unknown"
 
     const { crack_times } = timeToCrackInfo
-    const minutes = crack_times.dictionary_attack.minutes
+    const minutes = crack_times.dictionary_attack.hours
 
     // Convert to appropriate time unit
     if (minutes < 1) {
@@ -338,7 +337,7 @@ export default function PasswordAnalyzer() {
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">Time to crack: </span>
                     <span className="text-sm font-medium">
-                    {result.time_to_crack.crack_times.dictionary_attack.days > 1 ? `${result.time_to_crack.crack_times.dictionary_attack.days} days` : `${result.time_to_crack.crack_times.dictionary_attack.minutes} minutes`}
+                    {result.time_to_crack.crack_times.dictionary_attack.hours > 1 ? `${result.time_to_crack.crack_times.dictionary_attack.hours} hours` : `${result.time_to_crack.crack_times.dictionary_attack.hours} hours`}
                     </span>
                   </div>
                 </div>
@@ -415,7 +414,7 @@ export default function PasswordAnalyzer() {
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">Time to crack: </span>
                     <span className="text-sm font-medium">
-                    {result.new_time_to_crack.crack_times.dictionary_attack.days > 1 ? `${result.new_time_to_crack.crack_times.dictionary_attack.days} days` : `${result.new_time_to_crack.crack_times.dictionary_attack.minutes} minutes`}
+                    {result.new_time_to_crack.crack_times.dictionary_attack.hours > 1 ? `${result.new_time_to_crack.crack_times.dictionary_attack.hours} hours` : `${result.new_time_to_crack.crack_times.dictionary_attack.hours} hours`}
                     </span>
                   </div>
                 </div>
@@ -525,8 +524,8 @@ export default function PasswordAnalyzer() {
                     <div className="relative h-10 space-y-2">
                       {(() => {
                         // Calculate relative strengths for visualization using dictionary attack times
-                        const originalMinutes = result.time_to_crack.crack_times.dictionary_attack.minutes
-                        const suggestedMinutes = result.new_time_to_crack.crack_times.dictionary_attack.minutes
+                        const originalMinutes = result.time_to_crack.crack_times.dictionary_attack.hours
+                        const suggestedMinutes = result.new_time_to_crack.crack_times.dictionary_attack.hours
 
                         // Use logarithmic scale with base 10
                         const logOriginal = Math.log10(Math.max(0.1, originalMinutes))
@@ -579,13 +578,13 @@ export default function PasswordAnalyzer() {
                     <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
                       <div className="text-xs text-muted-foreground mb-1">Current crack time:</div>
                       <div className="text-sm font-medium text-red-400">
-                        {result.time_to_crack.crack_times.dictionary_attack.days > 1 ? `${result.time_to_crack.crack_times.dictionary_attack.days} days` : `${result.time_to_crack.crack_times.dictionary_attack.minutes} minutes`}
+                        {result.time_to_crack.crack_times.dictionary_attack.hours > 1 ? `${result.time_to_crack.crack_times.dictionary_attack.hours} hours` : `${result.time_to_crack.crack_times.dictionary_attack.hours} hours`}
                       </div>
                     </div>
                     <div className="p-3 bg-emerald-950/20 rounded-lg border border-emerald-900/30">
                       <div className="text-xs text-muted-foreground mb-1">Suggested crack time:</div>
                       <div className="text-sm font-medium text-emerald-400">
-                      {result.new_time_to_crack.crack_times.dictionary_attack.days > 1 ? `${result.new_time_to_crack.crack_times.dictionary_attack.days} days` : `${result.new_time_to_crack.crack_times.dictionary_attack.minutes} minutes`}
+                      {result.new_time_to_crack.crack_times.dictionary_attack.hours > 1 ? `${result.new_time_to_crack.crack_times.dictionary_attack.hours} hours` : `${result.new_time_to_crack.crack_times.dictionary_attack.hours} hours`}
                       </div>
                     </div>
                   </div>
@@ -630,7 +629,7 @@ export default function PasswordAnalyzer() {
                           <div key={attackType} className="p-2 bg-muted/50 rounded border border-border/50">
                             <div className="text-xs font-medium uppercase mb-1">{attackType.replace("_", " ")}</div>
                             <div className="text-xs truncate">
-                              {info.days > 1 ? `${info.days} days` : `${info.minutes} minutes`}
+                              {info.hours > 1 ? `${info.hours} hours` : `${info.hours} hours`}
                             </div>
                           </div>
                         ))}
@@ -642,7 +641,7 @@ export default function PasswordAnalyzer() {
                           <div key={attackType} className="p-2 bg-primary/5 rounded border border-primary/20">
                             <div className="text-xs font-medium uppercase mb-1">{attackType.replace("_", " ")}</div>
                             <div className="text-xs truncate">
-                              {info.days > 1 ? `${info.days} days` : `${info.minutes} minutes`}
+                              {info.hours > 1 ? `${info.hours} hours` : `${info.hours} hours`}
                             </div>
                           </div>
                         ))}

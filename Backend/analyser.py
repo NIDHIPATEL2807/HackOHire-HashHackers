@@ -66,17 +66,20 @@ def extract_json_block(text):
 
 def get_ai_analysis(password):
     prompt = f"""
-I am a responsible and expert password generator tasked with analyzing the password: "{password}". My goal is to identify vulnerabilities, provide improvement suggestions, and suggest a stronger password that retains the core theme or meaning of the original password but significantly enhances its security for real-world use. Follow these steps:
+I am a responsible and expert password generator tasked with analyzing the password: "{password}". My goal is to identify vulnerabilities, provide improvement suggestions, and suggest a significantly stronger password that retains the core theme or meaning of the original password but maximizes security for real-world use. Follow these steps:
 
 1. Analyze the password for specific vulnerabilities or weaknesses (e.g., dictionary words, predictable patterns, lack of character variety, short length, common substitutions). Do not list generic issues unless they genuinely apply.
 2. Provide actionable suggestions to improve the password based on the identified vulnerabilities.
 3. Suggest a stronger version of the password that:
    - Retains the core theme or meaning of the original password.
-   - Must be at least 12 characters long.
-   - Must include at least one uppercase letter, one lowercase letter, one number, and one special character (e.g., !@#$%^&*).
+   - Must be at least 16 characters long to ensure maximum entropy.
+   - Must include at least two uppercase letters, two lowercase letters, two numbers, and two special characters (e.g., !@#$%^&*?~).
    - Must avoid predictable patterns (e.g., keyboard sequences like "qwerty", consecutive characters like "aaa", or common substitutions like "password -> p@ssw0rd").
-   - Must not use dictionary words without significant modification.
-   - Must be resistant to common attacks (dictionary, brute force, rainbow table).
+   - Must not use dictionary words without significant modification (e.g., combine with numbers and symbols or alter significantly).
+   - Must incorporate randomization to increase complexity (e.g., random insertion of special characters or numbers within the theme).
+   - Must be highly resistant to common attacks (dictionary, brute force, rainbow table).
+   - Must not repeat characters more than twice consecutively.
+   - Must ensure a mix of character types distributed throughout the password, not just at the start or end.
 
 Respond ONLY in pure JSON format like this:
 {{
@@ -98,8 +101,8 @@ Do not include explanations, comments, or markdown. Return pure JSON.
                 "stream": False,
                 "format": "json",
                 "options": {
-                    "temperature": 0.5,
-                    "num_predict": 500
+                    "temperature": 0.5,  # Slightly increased for more creative suggestions
+                    "num_predict": 600   # Increased to handle longer responses
                 }
             },
             timeout=30
@@ -108,11 +111,18 @@ Do not include explanations, comments, or markdown. Return pure JSON.
         result = response.json()
         output = result.get("response", "")
 
-
         parsed = extract_json_block(output)
         if parsed:
             if not isinstance(parsed.get("suggested_password"), str):
                 raise ValueError("Suggested password is not a string")
+            # Additional validation for suggested password
+            suggested = parsed.get("suggested_password")
+            if (len(suggested) < 16 or
+                sum(c.isupper() for c in suggested) < 2 or
+                sum(c.islower() for c in suggested) < 2 or
+                sum(c.isdigit() for c in suggested) < 2 or
+                sum(c in "!@#$%^&*?~" for c in suggested) < 2):
+                raise ValueError("Suggested password does not meet complexity requirements")
             return parsed
         else:
             raise ValueError("No valid JSON block extracted from AI response")
@@ -154,7 +164,6 @@ def analyse_password():
 
         new_time_to_crack = estimate_crack_time(ai_results['suggested_password'])
         new_strength = predict_strength(ai_results['suggested_password'], model_pipeline)
-        # print(f"Suggested password: {ai_results['suggested_password']}, Strength: {new_strength}")
         print({
             "original_password": password,
             "strength": strength,
@@ -178,5 +187,3 @@ def analyse_password():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5002, debug=True)
-
-

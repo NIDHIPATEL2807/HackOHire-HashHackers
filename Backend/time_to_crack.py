@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
 import requests
+import math
 
 app = Flask(__name__)
 CORS(app)
@@ -31,19 +32,67 @@ def extract_json_block(text):
         print(f"Robust JSON extraction failed: {e}")
         return None
 
+def estimate_crack_times_fallback(password):
+    """
+    Fallback method to estimate crack times if the model fails.
+    Returns times in hours based on password complexity.
+    """
+    length = len(password)
+    charset_size = 0
+    if any(c.islower() for c in password):
+        charset_size += 26
+    if any(c.isupper() for c in password):
+        charset_size += 26
+    if any(c.isdigit() for c in password):
+        charset_size += 10
+    if any(not c.isalnum() for c in password):
+        charset_size += 32
+
+    if charset_size == 0:
+        charset_size = 26  # Default to lowercase if no characters detected
+
+    # Total possible combinations
+    combinations = charset_size ** length
+
+    # Attack speeds (guesses per second)
+    rainbow_table_speed = 1_000_000_000  # 1 billion guesses/sec
+    brute_force_speed = 100_000_000_000  # 100 billion guesses/sec
+    dictionary_speed = 10_000_000  # 10 million guesses/sec
+
+    # Dictionary attack: Assume password is in a 10M-word dictionary with variations
+    dictionary_combinations = 10_000_000 * 100  # 10M words with 100 variations each
+    dictionary_hours = (dictionary_combinations / dictionary_speed) / 3600
+
+    # Adjust dictionary attack if password looks complex (not just a dictionary word)
+    if length > 8 and charset_size > 36:
+        dictionary_hours *= 10  # Increase time for complex passwords
+
+    # Brute force and rainbow table calculations
+    brute_force_hours = (combinations / brute_force_speed) / 3600
+    rainbow_table_hours = min((combinations / rainbow_table_speed) / 3600, brute_force_hours * 0.8)
+
+    return {
+        "password": password,
+        "crack_times": {
+            "rainbow_table": {"hours": max(0.01, round(rainbow_table_hours, 2))},
+            "offline_brute_force": {"hours": max(0.01, round(brute_force_hours, 2))},
+            "dictionary_attack": {"hours": max(0.01, round(dictionary_hours, 2))}
+        }
+    }
+
 def get_crack_times(password):
-    # Stricter prompt from a responsible red hat hacker perspective
+    # Updated prompt for black hat hacker with precise hour-based calculations
     prompt = f"""
-I am a responsible red hat hacker tasked with analyzing the password: '{password}'. Using my expertise, I will calculate the realistic time to crack this password based on its complexity (length, character set, patterns) and standard attack methods. I will use the following benchmarks: rainbow table attack (assuming precomputed tables for common patterns), offline brute force attack (10 billion hashes/second with a high-end GPU cluster), pure brute force attack (1 million attempts/second with a standard PC), and dictionary attack (1 million-word dictionary with common variations). I will provide honest, clean estimates in days and minutes only, avoiding exaggerated or gibberish values. Return the results in pure JSON format as follows:
+I am a skilled black hat hacker tasked with analyzing the password: '{password}'. Using my expertise, I will calculate the precise time to crack this password based on its complexity (length, character set, patterns) and advanced attack methods. I will use the following benchmarks: rainbow table attack (assuming precomputed tables optimized for common and custom patterns), offline brute force attack (100 billion hashes/second with a top-tier GPU cluster), and dictionary attack (10 million-word dictionary with extensive variations). I will provide exact crack times in hours only, with rigorous checks and realistic calculations based on password strength. Return the results in pure JSON format as follows:
 {{
   "password": "{password}",
   "crack_times": {{
-    "rainbow_table": {{"days": number, "minutes": number}},
-    "offline_brute_force": {{"days": number, "minutes": number}},
-    "dictionary_attack": {{"days": number, "minutes": number}}
+    "rainbow_table": {{"hours": number}},
+    "offline_brute_force": {{"hours": number}},
+    "dictionary_attack": {{"hours": number}}
   }}
 }}
-Do not include seconds, explanations, comments, or markdown. Return pure JSON with precise numerical values based on realistic hacker calculations.
+Do not include days, minutes, explanations, comments, or markdown. Return pure JSON with precise numerical values based on advanced hacker techniques.
 """
 
     # Ollama API endpoint (assumes local instance)
@@ -73,31 +122,14 @@ Do not include seconds, explanations, comments, or markdown. Return pure JSON wi
         # Validate numerical values and structure
         for method in ["rainbow_table", "offline_brute_force", "dictionary_attack"]:
             times = parsed["crack_times"][method]
-            if not all(isinstance(times[key], (int, float)) for key in ["days", "minutes"]):
-                raise ValueError(f"Non-numerical values found in {method} crack times")
+            if not isinstance(times["hours"], (int, float)) or times["hours"] < 0:
+                raise ValueError(f"Invalid hours value in {method} crack times")
 
         return parsed
 
-    except requests.exceptions.RequestException as e:
-        print(f"Error communicating with Ollama: {e}")
-        return {
-            "password": password,
-            "crack_times": {
-                "rainbow_table": {"days": 0, "minutes": 0},
-                "offline_brute_force": {"days": 0, "minutes": 0},
-                "dictionary_attack": {"days": 0, "minutes": 0}
-            }
-        }
-    except Exception as e:
-        print(f"Error processing Ollama output: {e}")
-        return {
-            "password": password,
-            "crack_times": {
-                "rainbow_table": {"days": 0, "minutes": 0},
-                "offline_brute_force": {"days": 0, "minutes": 0},
-                "dictionary_attack": {"days": 0, "minutes": 0}
-            }
-        }
+    except (requests.exceptions.RequestException, ValueError, KeyError) as e:
+        print(f"Error with Ollama response, using fallback: {e}")
+        return estimate_crack_times_fallback(password)
 
 @app.route('/crack_time', methods=['POST'])
 def calculate_crack_time():
@@ -118,5 +150,4 @@ def calculate_crack_time():
         return jsonify({"error": f"Error calculating crack time: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5004)
-
+    app.run(host='0.0.0.0', port=5004,debug=True)
