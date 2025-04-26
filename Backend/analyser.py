@@ -1,8 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
-import json
-import re
+import json5
 import joblib
 import requests
 from dotenv import load_dotenv
@@ -38,35 +37,33 @@ model_pipeline = joblib.load(MODEL_PATH)
 
 
 def extract_json_block(text):
+    """
+    Extract the first complete JSON object from text using json5 for flexible parsing.
+    """
     try:
-        brace_stack = []
+        stack = []
         start_idx = None
         for i, char in enumerate(text):
             if char == '{':
-                if not brace_stack:
+                if not stack:
                     start_idx = i
-                brace_stack.append('{')
+                stack.append('{')
             elif char == '}':
-                if brace_stack:
-                    brace_stack.pop()
-                    if not brace_stack and start_idx is not None:
-                        candidate = text[start_idx:i + 1]
-                        return json.loads(candidate)
-        
-        # If JSON ends without final }, try fixing it manually
-        if start_idx is not None:
-            candidate = text[start_idx:].strip()
-            if not candidate.endswith('}'):
-                candidate += '}'
-            return json.loads(candidate)
-
+                if stack:
+                    stack.pop()
+                    if not stack and start_idx is not None:
+                        candidate = text[start_idx:i+1]
+                        return json5.loads(candidate)
         raise ValueError("No valid JSON block found")
     except Exception as e:
-        print("Robust JSON extraction failed:", e)
+        print("Robust JSON5 extraction failed:", e)
         return None
 
 
 def get_ai_analysis(password):
+    """
+    Send the password to Llama3 via Ollama and get vulnerabilities, suggestions, and a stronger version.
+    """
     prompt = f"""
 Analyze the following password:
 
@@ -99,6 +96,8 @@ Do not include explanations, comments, or markdown. Return pure JSON.
         )
         result = response.json()
         output = result.get("response", "")
+
+        print("Raw AI Response:", output)  # helpful for debugging
 
         parsed = extract_json_block(output)
         if parsed:
@@ -133,20 +132,32 @@ def analyse_password():
 
         # Direct Ollama-based AI insights
         ai_results = get_ai_analysis(password)
-        new_time_to_crack = estimate_crack_time(ai_results['suggested_password'])
-        new_strength = predict_strength(ai_results['suggested_password'], model_pipeline)
-        while (new_strength<0.85):
+
+        if not ai_results or ai_results.get("suggested_password") is None:
+            return jsonify({"error": "Failed to generate improved password via AI"}), 500
+
+        # Evaluate the suggested password
+        new_password = ai_results["suggested_password"]
+        new_time_to_crack = estimate_crack_time(new_password)
+        new_strength = predict_strength(new_password, model_pipeline)
+
+        # Retry mechanism if strength is low
+        retries = 0
+        while new_strength < 0.85 and retries < 3:
             ai_results = get_ai_analysis(password)
-            new_time_to_crack = estimate_crack_time(ai_results['suggested_password'])
-            new_strength = predict_strength(ai_results['suggested_password'], model_pipeline)
-        
-        
+            new_password = ai_results.get("suggested_password")
+            if not new_password:
+                break
+            new_time_to_crack = estimate_crack_time(new_password)
+            new_strength = predict_strength(new_password, model_pipeline)
+            retries += 1
+
         return jsonify({
             "original_password": password,
             "strength": strength,
             "time_to_crack": time_to_crack,
             **ai_results,
-            "new_time_to_crack":new_time_to_crack,
+            "new_time_to_crack": new_time_to_crack,
             "new_strength": new_strength
         })
 
