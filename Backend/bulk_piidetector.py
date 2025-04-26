@@ -91,9 +91,9 @@ def check_pii_matching(row):
         matches.append("Zodiac sign")
     
     if matches:
-        return f"Matched: {', '.join(matches)}"
+        return f"matched"
     else:
-        return "Not-matched"
+        return "not-matched"
 
 def process_csv(input_file, output_file):
     """
