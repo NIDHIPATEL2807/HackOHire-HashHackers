@@ -1,17 +1,11 @@
 "use client"
 
-import { CardContent } from "@/components/ui/card"
-
-import { CardTitle } from "@/components/ui/card"
-
-import { CardHeader } from "@/components/ui/card"
-
 import type React from "react"
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertTriangle, FileUp, Download, Loader2, FileSpreadsheet, CheckCircle, PieChart } from "lucide-react"
+import { AlertTriangle, FileUp, Download, Loader2, FileSpreadsheet, CheckCircle, Copy } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -24,10 +18,29 @@ import {
 } from "@/components/animated-card"
 import { AnimatedButton } from "@/components/animated-button"
 import { AnimatedSection } from "@/components/animated-section"
-
-// Add these imports at the top of the file
 import axios from "axios"
 import { useToast } from "@/components/ui/use-toast"
+
+// Add these imports at the top of the file
+import { cn } from "@/lib/utils"
+
+// Updated interface for password details
+interface PasswordDetail {
+  password: string
+  strength: string
+  issues: string
+  suggested_password: string
+}
+
+// Updated interface for API response
+interface BulkAnalysisResult {
+  total_passwords_analyzed: number
+  weak_passwords: number
+  moderate_passwords: number
+  strong_passwords: number
+  download_link: string
+  password_details?: PasswordDetail[]
+}
 
 // Add this constant at the top of the file, after the imports
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
@@ -36,27 +49,13 @@ export default function BulkAnalyzer() {
   const [file, setFile] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
-  const [result, setResult] = useState<{
-    analyzed: number
-    weak: number
-    moderate: number
-    strong: number
-    downloadUrl: string
-    passwordDetails?: Array<{
-      password: string
-      strength: string
-      issues: string
-    }>
-  } | null>(null)
+  const [result, setResult] = useState<BulkAnalysisResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  // Inside the component function, add this line after the existing state declarations
   const { toast } = useToast()
-
-  // Add this state after the other state declarations
   const [retryCount, setRetryCount] = useState(0)
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
 
   // Update the handleFileChange function to check file size
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,7 +131,6 @@ export default function BulkAnalyzer() {
     }
   }
 
-  // Replace the handleAnalyze function with this implementation
   const handleAnalyze = async () => {
     if (!file) {
       setError("Please select a file to analyze")
@@ -157,21 +155,19 @@ export default function BulkAnalyzer() {
         const response = await axios.post("http://127.0.0.1:5000/bulk", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
-          }
+          },
+          onUploadProgress: (progressEvent) => {
+            // Calculate and update upload progress
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 100))
+            setUploadProgress(percentCompleted)
+          } // 30 seconds
         })
 
         // Reset retry count on success
         setRetryCount(0)
 
         // Handle successful response
-        setResult({
-          analyzed: response.data.total_passwords_analyzed,
-          weak: response.data.weak_passwords,
-          moderate: response.data.moderate_passwords,
-          strong: response.data.strong_passwords,
-          downloadUrl: response.data.download_link,
-          passwordDetails: response.data.password_details || [],
-        })
+        setResult(response.data)
 
         toast({
           title: "Analysis Complete",
@@ -225,9 +221,8 @@ export default function BulkAnalyzer() {
     await attemptUpload()
   }
 
-  // Add this function after the handleAnalyze function
   const handleDownloadReport = async () => {
-    if (!result || !result.downloadUrl) return
+    if (!result || !result.download_link) return
 
     try {
       // Show loading toast
@@ -237,7 +232,7 @@ export default function BulkAnalyzer() {
       })
 
       // Download the file
-      const response = await axios.get(`http://127.0.0.1:5000${result.downloadUrl}`, {
+      const response = await axios.get(result.download_link, {
         responseType: "blob",
       })
 
@@ -265,6 +260,39 @@ export default function BulkAnalyzer() {
         variant: "destructive",
       })
     }
+  }
+
+  // Helper function to get security color based on strength
+  const getSecurityColor = (strength: number): string => {
+    if (strength < 0.3) return "text-red-500"
+    if (strength < 0.7) return "text-amber-500"
+    return "text-emerald-500"
+  }
+
+  // Handle copying a password to clipboard
+  const copyToClipboard = (text: string, index: number) => {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setCopiedIndex(index)
+        setTimeout(() => setCopiedIndex(null), 2000)
+
+        // Show success toast
+        toast({
+          title: "Copied to Clipboard",
+          description: "Password has been copied to your clipboard.",
+        })
+      })
+      .catch((err) => {
+        console.error("Failed to copy: ", err)
+
+        // Show error toast
+        toast({
+          title: "Copy Failed",
+          description: "Failed to copy password to clipboard.",
+          variant: "destructive",
+        })
+      })
   }
 
   return (
@@ -439,7 +467,9 @@ export default function BulkAnalyzer() {
                     transition={{ duration: 0.4, delay: 0.4 }}
                   >
                     <CheckCircle className="h-5 w-5 text-emerald-500" />
-                    <p className="text-lg font-medium">Successfully analyzed {result.analyzed} passwords</p>
+                    <p className="text-lg font-medium">
+                      Successfully analyzed {result.total_passwords_analyzed} passwords
+                    </p>
                   </motion.div>
 
                   <div className="grid grid-cols-3 gap-4">
@@ -456,7 +486,7 @@ export default function BulkAnalyzer() {
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.4, delay: 0.8 }}
                       >
-                        {result.weak}
+                        {result.weak_passwords}
                       </motion.p>
                       <p className="text-sm">Weak</p>
                     </motion.div>
@@ -473,7 +503,7 @@ export default function BulkAnalyzer() {
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.4, delay: 0.9 }}
                       >
-                        {result.moderate}
+                        {result.moderate_passwords}
                       </motion.p>
                       <p className="text-sm">Moderate</p>
                     </motion.div>
@@ -490,22 +520,15 @@ export default function BulkAnalyzer() {
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.4, delay: 1.0 }}
                       >
-                        {result.strong}
+                        {result.strong_passwords}
                       </motion.p>
                       <p className="text-sm">Strong</p>
                     </motion.div>
                   </div>
 
-                  <motion.div
-                    className="flex justify-center"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5, delay: 0.8 }}
-                  >
-                    <PieChart className="h-40 w-40 text-muted-foreground" />
-                  </motion.div>
+                  
 
-                  {result.passwordDetails && result.passwordDetails.length > 0 && (
+                  {result.password_details && result.password_details.length > 0 && (
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -513,13 +536,11 @@ export default function BulkAnalyzer() {
                       className="mt-6 space-y-4"
                     >
                       <h3 className="text-lg font-medium">Password Analysis Details</h3>
-                      <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
-                        {result.passwordDetails.map((detail, index) => {
-                          // Calculate color based on strength
+                      <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2">
+                        {result.password_details.map((detail, index) => {
+                          // Parse strength from string to number
                           const strength = Number.parseFloat(detail.strength)
-                          let strengthColor = "text-red-500"
-                          if (strength > 0.85) strengthColor = "text-emerald-500"
-                          else if (strength > 0.3) strengthColor = "text-amber-500"
+                          const strengthColor = getSecurityColor(strength)
 
                           return (
                             <motion.div
@@ -527,17 +548,57 @@ export default function BulkAnalyzer() {
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ duration: 0.3, delay: 1.1 + index * 0.05 }}
-                              className="p-4 bg-muted/50 rounded-lg border border-border"
+                              className="bg-muted/30 rounded-lg border border-border overflow-hidden"
                             >
-                              <div className="flex justify-between items-center mb-2">
-                                <div className="font-mono text-sm bg-background/50 px-2 py-1 rounded">
-                                  {detail.password}
+                              <div className="p-4">
+                                <div className="flex justify-between items-center mb-2">
+                                  <div className="font-mono text-sm bg-background/70 px-2 py-1 rounded truncate max-w-[200px]">
+                                    {detail.password}
+                                  </div>
+                                  <div className={`text-sm font-medium ${strengthColor}`}>
+                                    Strength: {Math.round(strength * 100)}%
+                                  </div>
                                 </div>
-                                <div className={`text-sm font-medium ${strengthColor}`}>
-                                  Strength: {Math.round(Number.parseFloat(detail.strength) * 100)}%
+
+                                <div className="text-sm text-muted-foreground whitespace-pre-line mb-3">
+                                  {detail.issues}
+                                </div>
+
+                                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden mb-4">
+                                  <div
+                                    className={cn(
+                                      "h-full",
+                                      strength < 0.3
+                                        ? "bg-red-500"
+                                        : strength < 0.7
+                                          ? "bg-amber-500"
+                                          : "bg-emerald-500",
+                                    )}
+                                    style={{ width: `${Math.max(5, strength * 100)}%` }}
+                                  />
+                                </div>
+
+                                <div className="bg-primary/5 border border-primary/15 rounded p-3">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs font-medium">Suggested Password:</span>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 px-2"
+                                      onClick={() => copyToClipboard(detail.suggested_password, index)}
+                                    >
+                                      {copiedIndex === index ? (
+                                        <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                                      ) : (
+                                        <Copy className="h-3.5 w-3.5" />
+                                      )}
+                                    </Button>
+                                  </div>
+                                  <code className="font-mono text-sm block bg-background/50 p-2 rounded border border-border/50">
+                                    {detail.suggested_password}
+                                  </code>
                                 </div>
                               </div>
-                              <div className="text-sm text-muted-foreground whitespace-pre-line">{detail.issues}</div>
                             </motion.div>
                           )
                         })}
