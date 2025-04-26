@@ -61,6 +61,14 @@ export function FeaturesSection() {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="inline-block mb-4 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-sm font-medium text-primary"
+          >
+            Powerful Features
+          </motion.div>
           <motion.h2
             className="text-3xl md:text-5xl font-bold mb-6"
             initial={{ opacity: 0, y: 20 }}
@@ -75,7 +83,7 @@ export function FeaturesSection() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            Our comprehensive suite of tools helps you create, analyze, and manage secure passwords
+            FortiPhrase provides a comprehensive suite of tools to help you create, analyze, and manage secure passwords
           </motion.p>
         </motion.div>
 

@@ -10,7 +10,7 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "SecurePass - Password Strength Analysis Tool",
+  title: "FortiPhrase - Password Strength Analysis Tool",
   description: "AI-powered password strength analysis and generation tool",
 }
 
@@ -30,7 +30,7 @@ export default function RootLayout({
             <footer className="py-6 border-t border-border">
               <div className="container flex flex-col items-center justify-center gap-2 md:flex-row md:justify-between">
                 <p className="text-sm text-muted-foreground">
-                  &copy; {new Date().getFullYear()} SecurePass. All rights reserved.
+                  &copy; {new Date().getFullYear()} FortiPhrase. All rights reserved.
                 </p>
                 <div className="flex items-center gap-4">
                   <a href="#" className="text-sm text-muted-foreground hover:text-foreground">

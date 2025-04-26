@@ -107,7 +107,7 @@ export function PasswordGuidelinesSection() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="inline-block mb-4 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-sm font-medium text-primary"
           >
-            Password Security Guidelines
+            FortiPhrase Security Guidelines
           </motion.div>
           <motion.h2
             className="text-3xl md:text-5xl font-bold mb-6"

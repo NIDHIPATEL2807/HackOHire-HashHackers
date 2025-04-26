@@ -20,7 +20,14 @@ export function HeroSection() {
       <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-96 h-96 rounded-full bg-cyan-500/20 blur-3xl" />
 
       <div className="container relative z-10 flex flex-col items-center text-center">
-        
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-4 px-4 py-1.5 rounded-full border border-teal-500/30 bg-teal-500/10 text-sm font-medium text-teal-400"
+        >
+          AI-Powered Password Security
+        </motion.div>
 
         <motion.h1
           className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 max-w-5xl"
@@ -47,8 +54,8 @@ export function HeroSection() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          Our intelligent password strength analyzer uses advanced machine learning to evaluate, strengthen, and
-          generate secure passwords that keep your accounts safe.
+          FortiPhrase uses advanced machine learning to evaluate, strengthen, and generate secure passwords that keep
+          your accounts safe.
         </motion.p>
 
         <div className="flex flex-col sm:flex-row gap-4 mt-4">
@@ -62,7 +69,6 @@ export function HeroSection() {
           </AnimatedButton>
         </div>
 
-        {/* Floating security badges */}
         
       </div>
     </section>
