@@ -4,22 +4,21 @@ import os
 import joblib
 import requests
 from dotenv import load_dotenv
-
 from utils import (
-    LenTransform, 
-    AlphaUCTransform, 
-    AlphaLCTransform, 
-    NumberTransform, 
-    SymbolTransform, 
-    MidCharTransform, 
-    RepCharTransform, 
-    UniqueCharTransform, 
-    ConsecAlphaUCTransform, 
-    ConsecAlphaLCTransform, 
-    ConsecNumberTransform, 
-    ConsecSymbolTransform, 
-    SeqAlphaTransform, 
-    SeqNumberTransform, 
+    LenTransform,
+    AlphaUCTransform,
+    AlphaLCTransform,
+    NumberTransform,
+    SymbolTransform,
+    MidCharTransform,
+    RepCharTransform,
+    UniqueCharTransform,
+    ConsecAlphaUCTransform,
+    ConsecAlphaLCTransform,
+    ConsecNumberTransform,
+    ConsecSymbolTransform,
+    SeqAlphaTransform,
+    SeqNumberTransform,
     SeqKeyboardTransform,
     predict_strength,
     estimate_crack_time
@@ -39,32 +38,34 @@ model_pipeline = joblib.load(MODEL_PATH)
 # Function to generate passphrase using local Ollama API
 def generate_passphrase_with_ollama(phrases):
     prompt = f"""
-You are a secure passphrase generator that creates meaningful, sentence-like passphrases.
-The passphrases should feel like short, vivid stories or diary entries that blend the user’s input naturally.
+You are an advanced passphrase generator that creates highly secure, meaningful, and memorable passphrases.
+
 Your response must ONLY include the final passphrase — no explanation or extra text.
 
 Based on the following personal phrases:
 {', '.join(phrases)}
 
 Generate a **secure, sentence-like passphrase** that:
-    1. Blends most of the input phrases into a logical, vivid sentence structure.
-    2. Is **15 to 20 characters** long.
-    3. Try to make a sense of the phrases, but it should not be a direct copy of any of them.
-    4. Includes at least **2 uppercase letters**, **1-2 numbers**, and **1-2 special characters** (only if they fit naturally).
-    5. **Avoids gibberish, random characters**, or excessive symbol use.
-    6. Do use simple substitutions like 'a' → '@'.
-    7. Should be **easy to remember for someone familiar with the phrases**, but still hard to guess for others.
-    8. Don't include spaces in the passphrase.
-    Output only the final passphrase.
-"""
+1. Weaves most input phrases into a coherent, vivid sentence-like structure that feels personal and meaningful.
+2. Is **15 to 20 characters** long.
+3. Forms a logical, memorable narrative inspired by the phrases, not a direct copy.
+4. Includes at least **2 uppercase letters**, **2 numbers**, and **2 special characters** (integrated naturally, e.g., '@' for 'a', '!' for emphasis).
+5. Avoids random characters, gibberish, or excessive symbols to maintain memorability.
+6. Uses subtle substitutions (e.g., 'a' → '@', 's' → '$') only when they enhance meaning or security.
+7. Is **easy to recall** for someone familiar with the phrases but **extremely hard to guess** for others.
+8. Excludes spaces to ensure compatibility with password fields.
+9. Prioritizes **high entropy** by balancing randomness with meaningful structure.
 
+Output only the final passphrase.
+"""
     try:
         response = requests.post(
             "http://localhost:11434/api/generate",
             json={
                 "model": "llama3",
                 "prompt": prompt,
-                "stream": False
+                "stream": False,
+                "temperature": 0.7
             }
         )
         data = response.json()
@@ -101,8 +102,7 @@ def generate_passphrase():
 
         return jsonify({
             "passphrase": passphrase,
-            "strength": strength,
-            "time_to_crack": time_to_cracks,
+            "strength": strength
         })
 
     except Exception as e:
