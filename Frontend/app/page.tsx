@@ -3,7 +3,7 @@
 import { HeroSection } from "@/components/hero-section"
 import { FeaturesSection } from "@/components/features-section"
 import { SecuritySection } from "@/components/security-section"
-import { CtaSection } from "@/components/cta-section"
+import { PasswordGuidelinesSection } from "@/components/password-guidelines-section"
 
 export default function Home() {
   return (
@@ -17,8 +17,8 @@ export default function Home() {
       {/* Security Section */}
       <SecuritySection />
 
-      {/* CTA Section */}
-      <CtaSection />
+      {/* Password Guidelines Section */}
+      <PasswordGuidelinesSection />
     </div>
   )
 }
