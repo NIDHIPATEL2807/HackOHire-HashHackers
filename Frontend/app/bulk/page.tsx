@@ -518,7 +518,7 @@ export default function BulkAnalyzer() {
                           // Calculate color based on strength
                           const strength = Number.parseFloat(detail.strength)
                           let strengthColor = "text-red-500"
-                          if (strength > 0.75) strengthColor = "text-emerald-500"
+                          if (strength > 0.85) strengthColor = "text-emerald-500"
                           else if (strength > 0.3) strengthColor = "text-amber-500"
 
                           return (

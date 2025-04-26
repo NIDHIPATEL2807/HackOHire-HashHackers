@@ -120,7 +120,6 @@ def extract_json_block(text):
             return json.loads(candidate)
         raise ValueError("No valid JSON block found")
     except Exception as e:
-        print(f"Robust JSON extraction failed: {e}")
         return None
 
 # Fallback function to parse non-JSON response
@@ -198,8 +197,6 @@ def generate_issues_with_ollama(password, strength, max_retries=3):
             )
             response.raise_for_status()
             raw_output = response.json()['message']['content']
-
-            print(f"Raw Ollama response for password '{password}':\n{raw_output}")
 
             # Try parsing as JSON
             parsed = extract_json_block(raw_output)
