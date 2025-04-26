@@ -6,8 +6,10 @@ from flask import Flask, request, jsonify, send_file, url_for
 from werkzeug.utils import secure_filename
 import uuid
 import time
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 # Configuration
 UPLOAD_FOLDER = 'uploads'

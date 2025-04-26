@@ -12,6 +12,7 @@ const routes = [
   { name: "Analyzer", path: "/analyze" },
   { name: "Passphrase", path: "/passphrase" },
   { name: "Bulk Analysis", path: "/bulk" },
+  { name: "PII Analysis", path: "/bulk-pii" },
 ]
 
 export default function Navbar() {
