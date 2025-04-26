@@ -27,15 +27,19 @@ import axios from "axios"
 
 // Define types for the API response
 interface CrackTimeInfo {
-  crack_time: string
-  hashcat_speed: string
+  days: number
+  minutes: number
+}
+
+interface AttackTypes {
+  dictionary_attack: CrackTimeInfo
+  offline_brute_force: CrackTimeInfo
+  rainbow_table: CrackTimeInfo
 }
 
 interface TimeToCrackInfo {
-  bcrypt: CrackTimeInfo
-  md5: CrackTimeInfo
-  sha1: CrackTimeInfo
-  sha256: CrackTimeInfo
+  crack_times: AttackTypes
+  password: string
 }
 
 interface PasswordAnalysisResponse {
@@ -78,10 +82,11 @@ export default function PasswordAnalyzer() {
     try {
       // Make a direct API call without retry logic
       const response = await axios.post(
-        "https://g3w1p375-5002.inc1.devtunnels.ms/analyse",
+        "http://localhost:5002/analyse",
         {
           password: password,
-        }
+        },
+        
       )
 
       // Set the result from the API response
@@ -114,50 +119,45 @@ export default function PasswordAnalyzer() {
     }
   }
 
-  // Helper function to get the lowest time to crack
-  const getLowestTimeToCrack = (timeToCrackInfo: TimeToCrackInfo | undefined): string => {
+  // Helper function to get the dictionary attack time to crack
+  const getDictionaryAttackTime = (timeToCrackInfo: TimeToCrackInfo | undefined): string => {
     if (!timeToCrackInfo) return "Unknown"
 
-    // Function to convert time string to seconds for comparison
-    const timeToSeconds = (timeString: string): number => {
-      // Extract the numeric part and the unit
-      const match = timeString.match(/^(\d+)\s+(.+)$/)
-      if (!match) return Number.MAX_SAFE_INTEGER
+    const { crack_times } = timeToCrackInfo
+    const minutes = crack_times.dictionary_attack.minutes
 
-      const value = Number.parseInt(match[1], 10)
-      const unit = match[2].toLowerCase()
-
-      if (unit.includes("second")) return value
-      if (unit.includes("minute")) return value * 60
-      if (unit.includes("hour")) return value * 60 * 60
-      if (unit.includes("day")) return value * 24 * 60 * 60
-      if (unit.includes("year") && !unit.includes("centur") && !unit.includes("millennia"))
-        return value * 365 * 24 * 60 * 60
-      if (unit.includes("centur")) return value * 100 * 365 * 24 * 60 * 60
-      if (unit.includes("millennia")) return value * 1000 * 365 * 24 * 60 * 60
-
-      return Number.MAX_SAFE_INTEGER // Default for unknown formats
+    // Convert to appropriate time unit
+    if (minutes < 1) {
+      return "less than a minute"
+    } else if (minutes < 60) {
+      return `${Math.round(minutes)} minutes`
+    } else if (minutes < 1440) {
+      // less than a day
+      return `${Math.round(minutes / 60)} hours`
+    } else if (minutes < 43200) {
+      // less than a month (30 days)
+      return `${Math.round(minutes / 1440)} days`
+    } else if (minutes < 525600) {
+      // less than a year
+      return `${Math.round(minutes / 43200)} months`
+    } else if (minutes < 5256000) {
+      // less than 10 years
+      return `${Math.round(minutes / 525600)} years`
+    } else if (minutes < 52560000) {
+      // less than a century
+      return `${Math.round(minutes / 5256000)} decades`
+    } else if (minutes < 525600000) {
+      // less than a millennium
+      return `${Math.round(minutes / 52560000)} centuries`
+    } else {
+      return `${Math.round(minutes / 525600000)} millennia`
     }
-
-    // Get all crack times
-    const crackTimes = Object.values(timeToCrackInfo).map((info) => ({
-      timeString: info.crack_time,
-      seconds: timeToSeconds(info.crack_time),
-    }))
-
-    // Find the lowest crack time
-    const lowestCrackTime = crackTimes.reduce(
-      (lowest, current) => (current.seconds < lowest.seconds ? current : lowest),
-      crackTimes[0],
-    )
-
-    return lowestCrackTime.timeString
   }
 
   // Helper function to format large numbers with commas
   const formatLargeNumber = (numStr: string): string => {
     // Handle special cases
-    if (numStr.includes("instant") || numStr.includes("less than")) {
+    if (numStr.includes("less than")) {
       return numStr
     }
 
@@ -217,8 +217,26 @@ export default function PasswordAnalyzer() {
 
   // Calculate improvement percentage
   const calculateImprovement = (): number => {
-    if (!result) return 0
-    return Math.round(((result.new_strength - result.strength) / result.strength) * 100)
+    if (!result) return 0;
+  
+    // Handle edge cases where strength is very low
+    if (result.strength < 0.05) {
+      // For very weak passwords, cap the improvement at 1000%
+      return Math.min(1000, Math.round((result.new_strength - result.strength) * 2000));
+    }
+  
+    // For normal cases, use a more balanced calculation
+    // This prevents extreme percentages when original strength is low
+    // and gives more weight to improvements at higher strength levels
+    const rawImprovement = ((result.new_strength - result.strength) / Math.max(0.1, result.strength)) * 100;
+  
+    // Apply a logarithmic scale for very large improvements to keep numbers reasonable
+    if (rawImprovement > 200) {
+      return Math.round(100 + Math.log10(rawImprovement) * 50);
+    }
+  
+    // For smaller improvements, round to nearest 5%
+    return Math.round(rawImprovement / 5) * 5;
   }
 
   return (
@@ -320,7 +338,7 @@ export default function PasswordAnalyzer() {
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">Time to crack: </span>
                     <span className="text-sm font-medium">
-                      {formatLargeNumber(getLowestTimeToCrack(result.time_to_crack))}
+                    {result.time_to_crack.crack_times.dictionary_attack.days > 1 ? `${result.time_to_crack.crack_times.dictionary_attack.days} days` : `${result.time_to_crack.crack_times.dictionary_attack.minutes} minutes`}
                     </span>
                   </div>
                 </div>
@@ -397,7 +415,7 @@ export default function PasswordAnalyzer() {
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">Time to crack: </span>
                     <span className="text-sm font-medium">
-                      {formatLargeNumber(getLowestTimeToCrack(result.new_time_to_crack))}
+                    {result.new_time_to_crack.crack_times.dictionary_attack.days > 1 ? `${result.new_time_to_crack.crack_times.dictionary_attack.days} days` : `${result.new_time_to_crack.crack_times.dictionary_attack.minutes} minutes`}
                     </span>
                   </div>
                 </div>
@@ -503,55 +521,21 @@ export default function PasswordAnalyzer() {
                   <div>
                     <div className="flex justify-between text-sm mb-2">
                       <span className="font-medium">Time to Crack</span>
-                      <motion.span
-                        className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full text-xs"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.7 }}
-                      >
-                        Significantly improved
-                      </motion.span>
-                    </div>
+                      
                     <div className="relative h-10 space-y-2">
                       {(() => {
-                        // Calculate relative strengths for visualization using log scale
-                        const originalTime = getLowestTimeToCrack(result.time_to_crack)
-                        const suggestedTime = getLowestTimeToCrack(result.new_time_to_crack)
-
-                        // Improved function to estimate seconds from time string
-                        const estimateSeconds = (timeStr: string): number => {
-                          if (timeStr.includes("instant") || timeStr.includes("less than")) return 0.1
-
-                          // Extract numeric value if possible
-                          const numericMatch = timeStr.match(/^(\d+(?:\.\d+)?)\s+(.+)$/)
-                          const value = numericMatch ? Number.parseFloat(numericMatch[1]) : 1
-
-                          // Determine multiplier based on time unit
-                          if (timeStr.includes("second")) return value
-                          if (timeStr.includes("minute")) return value * 60
-                          if (timeStr.includes("hour")) return value * 3600
-                          if (timeStr.includes("day")) return value * 86400
-                          if (timeStr.includes("month")) return value * 2592000
-                          if (timeStr.includes("year") && !timeStr.includes("centur") && !timeStr.includes("millenni"))
-                            return value * 31536000
-                          if (timeStr.includes("decade")) return value * 315360000
-                          if (timeStr.includes("centur")) return value * 3153600000
-                          if (timeStr.includes("millenni")) return value * 31536000000
-
-                          return 1 // Default fallback
-                        }
-
-                        const originalSeconds = Math.max(0.1, estimateSeconds(originalTime))
-                        const suggestedSeconds = Math.max(0.1, estimateSeconds(suggestedTime))
+                        // Calculate relative strengths for visualization using dictionary attack times
+                        const originalMinutes = result.time_to_crack.crack_times.dictionary_attack.minutes
+                        const suggestedMinutes = result.new_time_to_crack.crack_times.dictionary_attack.minutes
 
                         // Use logarithmic scale with base 10
-                        const logOriginal = Math.log10(originalSeconds)
-                        const logSuggested = Math.log10(suggestedSeconds)
+                        const logOriginal = Math.log10(Math.max(0.1, originalMinutes))
+                        const logSuggested = Math.log10(Math.max(0.1, suggestedMinutes))
 
-                        // Set minimum log value to 0 (1 second)
+                        // Set minimum log value to 0 (1 minute)
                         const minLog = 0
-                        // Set maximum log value to represent centuries (10^10 seconds ≈ 317 years)
-                        const maxLog = 12
+                        // Set maximum log value to represent centuries (10^8 minutes ≈ 190 years)
+                        const maxLog = 8
 
                         // Calculate normalized percentages for visualization
                         const normalizedLogOriginal = Math.max(0, (logOriginal - minLog) / (maxLog - minLog))
@@ -581,7 +565,13 @@ export default function PasswordAnalyzer() {
                         )
                       })()}
                     </div>
-                    
+                    <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                      <span>Minutes</span>
+                      <span>Hours</span>
+                      <span>Days</span>
+                      <span>Years</span>
+                      <span>Centuries</span>
+                    </div>
                   </div>
 
                   {/* Actual time comparison */}
@@ -589,13 +579,13 @@ export default function PasswordAnalyzer() {
                     <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
                       <div className="text-xs text-muted-foreground mb-1">Current crack time:</div>
                       <div className="text-sm font-medium text-red-400">
-                        {formatLargeNumber(getLowestTimeToCrack(result.time_to_crack))}
+                        {result.time_to_crack.crack_times.dictionary_attack.days > 1 ? `${result.time_to_crack.crack_times.dictionary_attack.days} days` : `${result.time_to_crack.crack_times.dictionary_attack.minutes} minutes`}
                       </div>
                     </div>
                     <div className="p-3 bg-emerald-950/20 rounded-lg border border-emerald-900/30">
                       <div className="text-xs text-muted-foreground mb-1">Suggested crack time:</div>
                       <div className="text-sm font-medium text-emerald-400">
-                        {formatLargeNumber(getLowestTimeToCrack(result.new_time_to_crack))}
+                      {result.new_time_to_crack.crack_times.dictionary_attack.days > 1 ? `${result.new_time_to_crack.crack_times.dictionary_attack.days} days` : `${result.new_time_to_crack.crack_times.dictionary_attack.minutes} minutes`}
                       </div>
                     </div>
                   </div>
@@ -632,26 +622,28 @@ export default function PasswordAnalyzer() {
                     <div className="bg-muted/30 rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-4">
                         <Info className="h-4 w-4 text-primary" />
-                        <h3 className="text-sm font-medium">Estimated Crack Times by Hash Algorithm</h3>
+                        <h3 className="text-sm font-medium">Estimated Crack Times by Attack Method</h3>
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                        {Object.entries(result.time_to_crack).map(([algorithm, info], index) => (
-                          <div key={algorithm} className="p-2 bg-muted/50 rounded border border-border/50">
-                            <div className="text-xs font-medium uppercase mb-1">{algorithm}</div>
-                            <div className="text-xs truncate">{formatLargeNumber(info.crack_time)}</div>
-                            <div className="text-[10px] text-muted-foreground mt-1">{info.hashcat_speed}</div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                        {Object.entries(result.time_to_crack.crack_times).map(([attackType, info], index) => (
+                          <div key={attackType} className="p-2 bg-muted/50 rounded border border-border/50">
+                            <div className="text-xs font-medium uppercase mb-1">{attackType.replace("_", " ")}</div>
+                            <div className="text-xs truncate">
+                              {info.days > 1 ? `${info.days} days` : `${info.minutes} minutes`}
+                            </div>
                           </div>
                         ))}
                       </div>
 
                       <div className="text-sm font-medium mb-2">Suggested Password Crack Times</div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {Object.entries(result.new_time_to_crack).map(([algorithm, info], index) => (
-                          <div key={algorithm} className="p-2 bg-primary/5 rounded border border-primary/20">
-                            <div className="text-xs font-medium uppercase mb-1">{algorithm}</div>
-                            <div className="text-xs truncate">{formatLargeNumber(info.crack_time)}</div>
-                            <div className="text-[10px] text-muted-foreground mt-1">{info.hashcat_speed}</div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {Object.entries(result.new_time_to_crack.crack_times).map(([attackType, info], index) => (
+                          <div key={attackType} className="p-2 bg-primary/5 rounded border border-primary/20">
+                            <div className="text-xs font-medium uppercase mb-1">{attackType.replace("_", " ")}</div>
+                            <div className="text-xs truncate">
+                              {info.days > 1 ? `${info.days} days` : `${info.minutes} minutes`}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -660,9 +652,10 @@ export default function PasswordAnalyzer() {
                 )}
               </div>
             </div>
+            </div>
           </Card>
         </motion.div>
       )}
     </div>
-  )
+  );
 }

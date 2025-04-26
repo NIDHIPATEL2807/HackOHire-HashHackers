@@ -22,24 +22,14 @@ import { AnimatedSection } from "@/components/animated-section"
 import axios from "axios"
 import { useToast } from "@/components/ui/use-toast"
 import { formatApiError, apiRequestWithRetry } from "@/lib/api-utils"
-
-// Define types for the API response
 interface CrackTimeInfo {
   crack_time: string
   hashcat_speed: string
 }
 
-interface TimeToCrackInfo {
-  bcrypt: CrackTimeInfo
-  md5: CrackTimeInfo
-  sha1: CrackTimeInfo
-  sha256: CrackTimeInfo
-}
-
 interface PasswordResponse {
   passphrase: string
   strength: number
-  time_to_crack: TimeToCrackInfo
 }
 
 export default function PassphraseGenerator() {
@@ -83,7 +73,7 @@ export default function PassphraseGenerator() {
       const response = await apiRequestWithRetry(
         () =>
           axios.post<PasswordResponse>(
-            "https://g3w1p375-5001.inc1.devtunnels.ms/generate-passphrase",
+            "http://127.0.0.1:5001/generate-passphrase",
             {
               phrases: validPhrases,
             },
@@ -156,76 +146,15 @@ export default function PassphraseGenerator() {
       })
   }
 
-  // Helper function to get the most relevant time to crack for display
-  const getDisplayTimeToCrack = (): string => {
-    if (!result) return ""
-
-    // Function to convert time string to seconds for comparison
-    const timeToSeconds = (timeString: string): number => {
-      // Extract the numeric part and the unit
-      const match = timeString.match(/^(\d+)\s+(.+)$/)
-      if (!match) return Number.MAX_SAFE_INTEGER
-
-      const value = Number.parseInt(match[1], 10)
-      const unit = match[2].toLowerCase()
-
-      if (unit.includes("second")) return value
-      if (unit.includes("minute")) return value * 60
-      if (unit.includes("hour")) return value * 60 * 60
-      if (unit.includes("day")) return value * 24 * 60 * 60
-      if (unit.includes("year") && !unit.includes("centur") && !unit.includes("millennia"))
-        return value * 365 * 24 * 60 * 60
-      if (unit.includes("centur")) return value * 100 * 365 * 24 * 60 * 60
-      if (unit.includes("millennia")) return value * 1000 * 365 * 24 * 60 * 60
-
-      return Number.MAX_SAFE_INTEGER // Default for unknown formats
-    }
-
-    // Get all crack times
-    const crackTimes = Object.values(result.time_to_crack).map((info) => ({
-      timeString: info.crack_time,
-      seconds: timeToSeconds(info.crack_time),
-    }))
-
-    // Find the lowest crack time
-    const lowestCrackTime = crackTimes.reduce(
-      (lowest, current) => (current.seconds < lowest.seconds ? current : lowest),
-      crackTimes[0],
-    )
-
-    return lowestCrackTime.timeString
-  }
-
-  // Helper function to format large numbers with commas
-  const formatLargeNumber = (numStr: string): string => {
-    // Extract the numeric part and the unit
-    const match = numStr.match(/^(\d+)\s+(.+)$/)
-    if (!match) return numStr
-
-    const number = match[1]
-    const unit = match[2]
-
-    // Format the number with commas
-    const formattedNumber = Number.parseInt(number).toLocaleString()
-    return `${formattedNumber} ${unit}`
-  }
-
-  // Helper function to get the security level based on crack time
-  const getSecurityLevel = (crackTime: string): string => {
-    if (crackTime.includes("second") || crackTime.includes("minute") || crackTime.includes("hour")) {
-      return "Very Weak"
-    } else if (crackTime.includes("day") || crackTime.includes("days")) {
+  const getSecurityLevel = (strength: number): string => {
+    if (strength < 0.3) {
       return "Weak"
-    } else if (crackTime.includes("year") && !crackTime.includes("years")) {
+    } else if (strength<0.65) {
       return "Moderate"
-    } else if (crackTime.includes("years") && !crackTime.match(/\d{3,}\s+years/)) {
+    } else if (strength<0.85) {
       return "Strong"
-    } else if (crackTime.includes("centur")) {
-      return "Very Strong"
-    } else if (crackTime.includes("millennia")) {
-      return "Extremely Strong"
     }
-    return "Unknown"
+    return "Very Strong"
   }
 
   // Helper function to get color based on security level
@@ -241,8 +170,6 @@ export default function PassphraseGenerator() {
         return "text-teal-500"
       case "Very Strong":
         return "text-emerald-500"
-      case "Extremely Strong":
-        return "text-emerald-600 font-bold"
       default:
         return "text-muted-foreground"
     }
@@ -403,50 +330,6 @@ export default function PassphraseGenerator() {
                     transition={{ duration: 0.8, delay: 0.7 }}
                   >
                     <PasswordStrengthMeter strength={result.strength * 100} />
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.8 }}
-                  >
-                    <TimeToCrack timeString={formatLargeNumber(getDisplayTimeToCrack())} />
-                  </motion.div>
-
-                  {/* Crack time details */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.9 }}
-                    className="p-4 bg-muted/50 rounded-lg border border-border"
-                  >
-                    <div className="flex items-center gap-2 mb-3">
-                      <Shield className="h-5 w-5 text-primary" />
-                      <h3 className="font-medium">Estimated Crack Times by Hash Algorithm</h3>
-                    </div>
-                    <div className="space-y-3">
-                      {Object.entries(result.time_to_crack).map(([algorithm, info], index) => {
-                        const securityLevel = getSecurityLevel(info.crack_time)
-                        const securityColor = getSecurityColor(securityLevel)
-                        const formattedCrackTime = formatLargeNumber(info.crack_time)
-
-                        return (
-                          <motion.div
-                            key={algorithm}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.3, delay: 1.0 + index * 0.1 }}
-                            className="grid grid-cols-12 gap-2 text-sm items-center"
-                          >
-                            <div className="col-span-2 font-medium uppercase">{algorithm}</div>
-                            <div className="col-span-7 truncate">
-                              <span className={securityColor}>{formattedCrackTime}</span>
-                            </div>
-                            <div className="col-span-3 text-xs text-muted-foreground">{info.hashcat_speed}</div>
-                          </motion.div>
-                        )
-                      })}
-                    </div>
                   </motion.div>
 
                   <motion.div

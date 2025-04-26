@@ -11,6 +11,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeRegressor
 import math
 import string
+import requests
 
 class LenTransform(BaseEstimator, TransformerMixin):
     def __init__(self):
@@ -354,17 +355,13 @@ def hashcat_speed(hash_type='bcrypt'):
     }
     return speeds.get(hash_type.lower(), 1000000)
 
+
 def estimate_crack_time(password):
-    entropy_bits = estimate_entropy(password)
-    total_guesses = 2 ** entropy_bits
-    
-    results = {}
-    for hash_type in ['bcrypt', 'sha1', 'md5', 'sha256']:
-        guesses_per_sec = hashcat_speed(hash_type)
-        seconds = total_guesses / guesses_per_sec
-        results[hash_type] = {
-            "crack_time": format_time(seconds),
-            "hashcat_speed": f"{guesses_per_sec:,} guesses/sec"
-        }
-    
-    return results
+    url = "http://127.0.0.1:5004/crack_time"
+    try:
+        response = requests.post(url, json={"password": password})
+        response.raise_for_status()  # Raises an HTTPError if the response was unsuccessful
+        return response.json()  # Assuming the server returns JSON
+    except requests.RequestException as e:
+        print(f"An error occurred: {e}")
+        return None
