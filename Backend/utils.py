@@ -11,7 +11,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeRegressor
 import math
 import string
-import requests
+import requests, re, random
 
 class LenTransform(BaseEstimator, TransformerMixin):
     def __init__(self):
@@ -299,9 +299,24 @@ def predict_strength(password: str, model_pipeline) -> float:
     input_df = pd.DataFrame({"password": [password]})
     
     # Predict the strength
-    predicted_strength = model_pipeline.predict(input_df)
+    predicted_strength = model_pipeline.predict(input_df)[0]
     
-    return predicted_strength[0]
+    # Check for complexity issues
+    complexity_issues = []
+    if not re.search(r'[A-Z]', password):
+        complexity_issues.append("uppercase letter")
+    if not re.search(r'[a-z]', password):
+        complexity_issues.append("lowercase letter")
+    if not re.search(r'\d', password):
+        complexity_issues.append("number")
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+        complexity_issues.append("special character")
+    
+    # If prediction > 0.7 and complexity issues exist
+    if predicted_strength > 0.7 and complexity_issues:
+        predicted_strength = round(random.uniform(0.3, 0.6), 2)
+    
+    return predicted_strength
 
 def estimate_entropy(password):
     charset = 0
