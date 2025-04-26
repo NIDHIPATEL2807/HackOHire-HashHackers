@@ -55,6 +55,7 @@ Generate a **secure, sentence-like passphrase** that:
 7. Is **easy to recall** for someone familiar with the phrases but **extremely hard to guess** for others.
 8. Excludes spaces to ensure compatibility with password fields.
 9. Prioritizes **high entropy** by balancing randomness with meaningful structure.
+10. Strictly add random 2-3 numbers to enhance the quality.
 
 Output only the final passphrase.
 """
