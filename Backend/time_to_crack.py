@@ -54,7 +54,7 @@ Do not include seconds, explanations, comments, or markdown. Return pure JSON wi
         "stream": False,
         "format": "json",
         "options": {
-            "temperature": 0.5,  # Lowered for more consistent output
+            "temperature": 0.3,  # Lowered for more consistent output
             "num_predict": 500
         }
     }
