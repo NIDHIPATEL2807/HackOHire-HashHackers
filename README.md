@@ -118,8 +118,6 @@ git clone https://github.com/Saur-Deshmukh/HackOHire-HashHackers.git
 - **Machine Learning Techniques**: Decision tree regressor
 - **Additional Libraries**: CSV processing, PII detection
 
-## License
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgments
 The FortiPhrase tool uses the Ollama and LLaMA3 AI models for offline password strength analysis and suggestions.
