@@ -55,6 +55,17 @@ Our model is a **Decision Tree Regressor** that predicts password strength based
 ```bash
 git clone https://github.com/Saur-Deshmukh/HackOHire-HashHackers.git
 ```
+## Ollama
+
+1. Install Ollama from [here](https://ollama.com/)
+2. Pull llama3 onto your system:
+   ```bash
+   ollama pull llama3
+   ```
+3. Run Ollama:
+   ```bash
+   ollama run llama3
+   ```
 
 ### Frontend (Next.js)
 1. Change Directory:
