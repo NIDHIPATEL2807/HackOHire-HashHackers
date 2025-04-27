@@ -7,10 +7,30 @@ from werkzeug.utils import secure_filename
 import uuid
 import time
 from flask_cors import CORS
+import joblib
+from utils import (
+    LenTransform,
+    AlphaUCTransform,
+    AlphaLCTransform,
+    NumberTransform,
+    SymbolTransform,
+    MidCharTransform,
+    RepCharTransform,
+    UniqueCharTransform,
+    ConsecAlphaUCTransform,
+    ConsecAlphaLCTransform,
+    ConsecNumberTransform,
+    ConsecSymbolTransform,
+    SeqAlphaTransform,
+    SeqNumberTransform,
+    SeqKeyboardTransform,
+    predict_strength
+)
 
 app = Flask(__name__)
 CORS(app)
-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, '..', 'Model', 'sample_model.joblib')
 # Configuration
 UPLOAD_FOLDER = 'uploads'
 RESULT_FOLDER = 'results'
@@ -27,10 +47,10 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def check_pii_matching(row):
+def check_pii_matching(row, model_pipeline):
     """
     Check if the generated password contains any PII from the same row.
-    Returns "matched" if PII is found, "not-matched" otherwise.
+    Returns "matched" if PII is found, "not-matched" otherwise, and the strength of the password.
     """
     # Convert gen_pass to lowercase for case-insensitive matching
     gen_pass = str(row['gen_pass']).lower()
@@ -40,89 +60,79 @@ def check_pii_matching(row):
     match_threshold = 50  # 50% similarity will be considered a match
 
     # Check for personal information in password using fuzzy matching
-
-    # Name checks (using fuzzy matching)
     if fuzz.partial_ratio(str(row['GivenName']).lower(), gen_pass) > match_threshold or fuzz.partial_ratio(str(row['Surname']).lower(), gen_pass) > match_threshold:
         matches.append("Name")
 
-    # Middle initial check (using fuzzy matching)
+    # Check for other PII as before...
     if 'MiddleInitial' in row and fuzz.partial_ratio(str(row['MiddleInitial']).lower(), gen_pass) > match_threshold:
         matches.append("Middle Initial")
-    
-    # Address check - looking for full or partial matches using fuzzy matching
     if 'StreetAddress' in row:
         address_parts = str(row['StreetAddress']).lower().split()
         for part in address_parts:
-            if len(part) > 2 and fuzz.partial_ratio(part, gen_pass) > match_threshold:  # Ignore very short words
+            if len(part) > 2 and fuzz.partial_ratio(part, gen_pass) > match_threshold:
                 matches.append("Address")
                 break
-    
-    # City check (using fuzzy matching)
     if 'City' in row and fuzz.partial_ratio(str(row['City']).lower(), gen_pass) > match_threshold:
         matches.append("City")
-    
-    # Birth date check (looking for patterns like MM/DD/YYYY, MM-DD-YYYY, etc.)
     if 'Birthday' in row and pd.notna(row['Birthday']):
         try:
-            # Try to parse the date
             date_str = str(row['Birthday'])
-            
-            # Extract year, month, day as individual components
             date_parts = re.findall(r'\d+', date_str)
             if date_parts:
-                # Check for year in password
                 if len(date_parts) >= 3:
                     year = date_parts[2] if len(date_parts[2]) == 4 else None
                     if year and fuzz.partial_ratio(year, gen_pass) > match_threshold:
                         matches.append("Birth year")
-                
-                # Check for full date in different formats in password
                 if date_str.replace('/', '').replace('-', '') in gen_pass:
                     matches.append("Full birthdate")
-                
-                # Check for month and day separately in password
                 if len(date_parts) >= 2:
                     month_day = date_parts[0] + date_parts[1]  # MMDD format
                     if fuzz.partial_ratio(month_day, gen_pass) > match_threshold:
                         matches.append("Month and Day")
         except:
             pass
-    
-    # Vehicle check (using fuzzy matching)
     if 'Vehicle' in row and fuzz.partial_ratio(str(row['Vehicle']).lower(), gen_pass) > match_threshold:
         matches.append("Vehicle")
-    
-    # Vehicle color check (using fuzzy matching)
     if 'Vehicle color' in row and fuzz.partial_ratio(str(row['Vehicle color']).lower(), gen_pass) > match_threshold:
         matches.append("Vehicle color")
-    
-    # Phone number check - remove spaces and other separators (using fuzzy matching)
     if 'TelephoneNumber' in row:
         phone = re.sub(r'\D', '', str(row['TelephoneNumber']))
         if phone and len(phone) >= 4:
-            # Check for sequences of at least 4 digits from phone number
             for i in range(len(phone) - 3):
                 if fuzz.partial_ratio(phone[i:i+4], gen_pass) > match_threshold:
                     matches.append("Phone number")
                     break
-            # Check for the entire phone number (using fuzzy matching)
             if fuzz.partial_ratio(phone, gen_pass) > match_threshold:
                 matches.append("Full phone number")
-    
-    # Mother's maiden name check (using fuzzy matching)
     if 'MothersMaiden' in row and fuzz.partial_ratio(str(row['MothersMaiden']).lower(), gen_pass) > match_threshold:
         matches.append("Mother's maiden name")
-    
-    # Zodiac sign check (using fuzzy matching)
     if 'TropicalZodiac' in row and fuzz.partial_ratio(str(row['TropicalZodiac']).lower(), gen_pass) > match_threshold:
         matches.append("Zodiac sign")
-    
-    if matches:
-        return "matched"
-    else:
-        return "not-matched"
 
-def process_csv(input_file_path):
+    # Check strength of the password
+    strength = predict_strength(gen_pass, model_pipeline)
+    
+    # Determine if password strength is weak, moderate, or strong
+    if strength<0.3:
+        strength_status = "Very Weak"
+    elif strength<0.5:
+        strength_status = "Weak"
+    elif strength<0.7:
+        strength_status = "Moderate"
+    elif strength<0.9:
+        strength_status = "Strong"
+    else:
+        strength_status = "Very Strong"
+
+    # Determine if password matches PII
+    pii_status = "matched" if matches else "not-matched"
+
+    # Add the strength status column
+    row['password_strength'] = strength_status
+
+    return pii_status, strength_status
+
+def process_csv(input_file_path, model_pipeline):
     """
     Process the input CSV file, check for PII in the generated passwords,
     and return the processed DataFrame and statistics.
@@ -130,8 +140,26 @@ def process_csv(input_file_path):
     # Read the CSV file into a pandas DataFrame
     df = pd.read_csv(input_file_path)
 
-    # Apply the PII check to each row
-    df['PII_Matched'] = df.apply(check_pii_matching, axis=1)
+    # Apply the PII check and strength to each row
+    pii_status = []
+    strength_status = []
+    after_pii_status = []
+    
+    for _, row in df.iterrows():
+        pii_result, strength = check_pii_matching(row, model_pipeline)
+        pii_status.append(pii_result)
+        strength_status.append(strength)
+
+        # Fix the logic for After_PII
+        if pii_result == "matched":
+            after_pii_status.append("Weak")  # If PII matched and strength is weak, set After_PII to "Weak"
+        else:
+            after_pii_status.append(strength)  # Otherwise, set it the same as strength
+
+    # Add PII status, Strength, and After_PII columns to the DataFrame
+    df['PII_Matched'] = pii_status
+    df['Strength'] = strength_status
+    df['After_PII'] = after_pii_status
 
     # Calculate statistics
     total_passwords = len(df)
@@ -145,6 +173,7 @@ def process_csv(input_file_path):
     }
 
     return df, stats
+
 
 @app.route('/bulk_pii', methods=['POST'])
 def upload_file():
@@ -171,8 +200,11 @@ def upload_file():
         file.save(input_filepath)
         
         try:
-            # Process the file
-            df, stats = process_csv(input_filepath)
+            # Load the model pipeline
+            model_pipeline = joblib.load(MODEL_PATH)
+
+            # Process the file with model pipeline for password strength and PII checks
+            df, stats = process_csv(input_filepath, model_pipeline)
             
             # Save the result
             result_filename = f"{base_filename}_processed_{unique_id}_{timestamp}.csv"

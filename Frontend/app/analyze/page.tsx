@@ -209,7 +209,7 @@ export default function PasswordAnalyzer() {
   const getSecurityRating = (strength: number): { label: string; color: string; bgColor: string } => {
     if (strength < 0.3) return { label: "Very Weak", color: "text-red-500", bgColor: "bg-red-500" }
     if (strength < 0.5) return { label: "Weak", color: "text-orange-500", bgColor: "bg-orange-500" }
-    if (strength < 0.7) return { label: "Moderate", color: "text-amber-500", bgColor: "bg-amber-500" }
+    if (strength < 0.65) return { label: "Moderate", color: "text-amber-500", bgColor: "bg-amber-500" }
     if (strength < 0.9) return { label: "Strong", color: "text-teal-500", bgColor: "bg-teal-500" }
     return { label: "Very Strong", color: "text-emerald-500", bgColor: "bg-emerald-500" }
   }
