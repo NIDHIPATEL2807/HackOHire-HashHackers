@@ -5,6 +5,7 @@ import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import { AnimatedButton } from "./animated-button"
 import { AnimatedBackground } from "./animated-background"
+import { Floating3DCard } from "./floating-3d-card"
 
 export function HeroSection() {
   return (
@@ -68,7 +69,45 @@ export function HeroSection() {
             <Link href="/passphrase">Generate Secure Passphrase</Link>
           </AnimatedButton>
         </div>
-
+         <motion.div
+                  className="mt-16 w-full max-w-2xl mx-auto"
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.6 }}
+                >
+                  <Floating3DCard className="w-full" glowColor="rgba(20, 184, 166, 0.3)">
+                    <div className="p-8 border border-border/60 rounded-xl bg-card/80 backdrop-blur-sm shadow-xl">
+                      <div className="space-y-6">
+                        <div className="flex justify-between items-center mb-6">
+                          <h3 className="text-xl font-semibold">Password Strength</h3>
+                          <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-full text-sm font-medium">
+                            Strong
+                          </span>
+                        </div>
+        
+                        <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                          <motion.div
+                            className="h-full bg-gradient-to-r from-teal-500 to-emerald-500"
+                            initial={{ width: 0 }}
+                            animate={{ width: "85%" }}
+                            transition={{ duration: 1, delay: 0.7 }}
+                          />
+                        </div>
+        
+                        <div className="grid grid-cols-2 gap-4 mt-6">
+                          <div className="p-4 bg-muted/50 rounded-lg border border-border/50">
+                            <div className="text-sm text-muted-foreground mb-1">Time to crack:</div>
+                            <div className="text-lg font-medium">3 centuries</div>
+                          </div>
+                          <div className="p-4 bg-muted/50 rounded-lg border border-border/50">
+                            <div className="text-sm text-muted-foreground mb-1">Character variety:</div>
+                            <div className="text-lg font-medium">Excellent</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Floating3DCard>
+                </motion.div>
         
       </div>
     </section>

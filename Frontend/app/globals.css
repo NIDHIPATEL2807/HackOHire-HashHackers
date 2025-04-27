@@ -85,3 +85,63 @@
 .feature-card:hover::before {
   @apply opacity-100;
 }
+
+/* Glass effect */
+.glass-effect {
+  @apply backdrop-blur-md bg-white/10 dark:bg-black/20 border border-white/20 dark:border-white/10;
+}
+
+/* Animated border */
+.animated-border {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.animated-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #14b8a6, #0ea5e9, #8b5cf6, #14b8a6);
+  background-size: 400% 100%;
+  animation: border-animation 8s linear infinite;
+  z-index: -1;
+}
+
+.animated-border::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  background: var(--background);
+  border-radius: calc(var(--radius) - 2px);
+  z-index: -1;
+}
+
+@keyframes border-animation {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 400% 0%;
+  }
+}
+
+/* Glow effect */
+.glow-effect {
+  position: relative;
+}
+
+.glow-effect::after {
+  content: "";
+  position: absolute;
+  inset: -20px;
+  background: radial-gradient(circle, var(--primary), transparent 70%);
+  opacity: 0.2;
+  filter: blur(20px);
+  z-index: -1;
+  transition: opacity 0.3s ease;
+}
+
+.glow-effect:hover::after {
+  opacity: 0.4;
+}

@@ -4,8 +4,9 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import Navbar from "@/components/navbar"
-import { AnimatedBackground } from "@/components/animated-background"
 import { Toaster } from "@/components/ui/toaster"
+import { ScrollIndicator } from "@/components/scroll-indicator"
+import { AnimatedBackground } from "@/components/animated-background"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -24,6 +25,7 @@ export default function RootLayout({
       <body className={`${inter.className} bg-background min-h-screen`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           <AnimatedBackground />
+          <ScrollIndicator />
           <div className="flex flex-col min-h-screen">
             <Navbar />
             <main className="flex-1">{children}</main>
